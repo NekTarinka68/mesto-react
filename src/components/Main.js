@@ -19,7 +19,7 @@ function Main (props) {
         setCards(data);
       })
         .catch((err) => console.log(err))
-    });
+    }, []);
     
     return (
       <main className="content">
