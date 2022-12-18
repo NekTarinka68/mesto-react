@@ -14,7 +14,7 @@ function App() {
   const [isEditProfilePopupOpen, setIsEditProfilePopupOpen] = React.useState(false);
   const [isAddPlacePopupOpen, setIsAddPlacePopupOpen] = React.useState(false);
   const [isEditAvatarPopupOpen, setIsEditAvatarPopupOpen] = React.useState(false);
-  const [selectedCard, setSelectedCard] = React.useState(false);
+  const [selectedCard, setSelectedCard] = React.useState(null);
   const [currentUser, setCurrentUser] = React.useState({});
   const [cards, setCards] = React.useState([]);
 
@@ -69,12 +69,14 @@ function App() {
           setCards([newCard, ...cards]);
           closeAllPopups()
         })
+        .catch((err) => console.log(err)) 
     }
 
     function handleCardDelete(card) {
       api.getDeleteCard(card._id)
         .then(() => {
           setCards((state) => state.filter((c) => c._id !== card._id));
+          closeAllPopups()
         })
         .catch((err) => console.log(err))
     }
@@ -99,7 +101,7 @@ function App() {
     setIsEditAvatarPopupOpen(false);
     setIsEditProfilePopupOpen(false);
     setIsAddPlacePopupOpen(false);
-    setSelectedCard(false);
+    setSelectedCard(null);
   };
 
   return (

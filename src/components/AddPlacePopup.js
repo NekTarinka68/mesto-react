@@ -8,7 +8,7 @@ function AddPlacePopup(props) {
   useEffect(() => {
     setName('')
     setLink('')
-  }, [])
+  }, [props.isOpen])
 
   function handleSubmit(event) {
     event.preventDefault();
