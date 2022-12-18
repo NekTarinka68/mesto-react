@@ -10,6 +10,7 @@
   top: 20px;
   right: 20px;
   transition: 0.5s;
+  display: none;
 }
 
 .element__delete:hover {

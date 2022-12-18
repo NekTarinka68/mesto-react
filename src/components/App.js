@@ -1,4 +1,5 @@
 import React from 'react';
+import { useEffect } from 'react';
 import Header from './Header';
 import Footer from './Footer';
 import Main from './Main';
@@ -6,12 +7,77 @@ import EditProfilePopup from './EditProfilePopup';
 import AddPlacePopup from './AddPlacePopup';
 import EditAvatarPopup from './EditAvatarPopup';
 import ImagePopup from './ImagePopup';
+import { api } from '../utils/api';
+import { CurrentUserContext } from '../contexts/CurrentUserContext';
 
 function App() {
   const [isEditProfilePopupOpen, setIsEditProfilePopupOpen] = React.useState(false);
   const [isAddPlacePopupOpen, setIsAddPlacePopupOpen] = React.useState(false);
   const [isEditAvatarPopupOpen, setIsEditAvatarPopupOpen] = React.useState(false);
   const [selectedCard, setSelectedCard] = React.useState(false);
+  const [currentUser, setCurrentUser] = React.useState({});
+  const [cards, setCards] = React.useState([]);
+
+  useEffect(() => {
+    Promise.all([api.getUserInfo(), api.getInitialCards()])
+        .then(([user, data]) => {
+            setCurrentUser(user)
+            setCards(data);
+        })
+          .catch((err) => console.log(err))
+    }, []);
+
+    function handleCardLike(card) {
+      const isLiked = card.likes.some(i => i._id === currentUser._id);
+
+      if (!isLiked) {
+        api.getLikeCard(card._id)
+          .then((res) => {
+            setCards((state) => state.map((c) => c._id === card._id ? res : c));
+          })
+          .catch((err) => console.log(err))
+      } else {
+        api.getDislikeCard(card._id)
+          .then((res) => {
+            setCards((state) => state.map((c) => c._id === card._id ? res : c));
+          })
+          .catch((err) => console.log(err))
+      }
+    }
+
+    function handleUpdateUser(data) {
+      api.getEditProfile(data)
+        .then((res) => {
+          setCurrentUser(res);
+          closeAllPopups();
+        })
+        .catch((err) => console.log(err))
+    }
+  
+    function handleUpdateAvatar(data) {
+      api.getProfileAvatar(data)
+        .then((res) => {
+          setCurrentUser(res);
+          closeAllPopups();
+        })
+        .catch((err) => console.log(err))
+    }
+  
+    function handleAddPlaceSubmit(data) {
+      api.getAddCard(data)
+        .then((newCard) => {
+          setCards([newCard, ...cards]);
+          closeAllPopups()
+        })
+    }
+
+    function handleCardDelete(card) {
+      api.getDeleteCard(card._id)
+        .then(() => {
+          setCards((state) => state.filter((c) => c._id !== card._id));
+        })
+        .catch((err) => console.log(err))
+    }
 
   function handleEditAvatarClick() {
     setIsEditAvatarPopupOpen(true)
@@ -37,13 +103,15 @@ function App() {
   };
 
   return (
+    <CurrentUserContext.Provider value={currentUser}>
     <div className='page'>
       <Header/>
-      <Main onEditAvatar = {handleEditAvatarClick} onEditProfile = {handleEditProfileClick} onAddPlace = {handleAddPlaceClick} onCardClick = {handleCardClick} />
+      <Main onEditAvatar = {handleEditAvatarClick} onEditProfile = {handleEditProfileClick} onAddPlace = {handleAddPlaceClick} 
+      onCardClick = {handleCardClick} cards={cards} onCardLike={handleCardLike} onCardDelete={handleCardDelete} />
       <Footer />
-      <EditProfilePopup isOpen={isEditProfilePopupOpen} onClose={closeAllPopups} />
-      <AddPlacePopup isOpen={isAddPlacePopupOpen} onClose={closeAllPopups} />
-      <EditAvatarPopup isOpen={isEditAvatarPopupOpen} onClose={closeAllPopups} />
+      <EditProfilePopup isOpen={isEditProfilePopupOpen} onClose={closeAllPopups} onUpdateUser={handleUpdateUser} />
+      <AddPlacePopup isOpen={isAddPlacePopupOpen} onClose={closeAllPopups} onAddPlace={handleAddPlaceSubmit}/>
+      <EditAvatarPopup isOpen={isEditAvatarPopupOpen} onClose={closeAllPopups} onUpdateAvatar={handleUpdateAvatar} />
       <ImagePopup card={selectedCard} onClose={closeAllPopups} />
 
       <div className="popup popup_type-delete">
@@ -56,6 +124,7 @@ function App() {
         </div>
       </div>
     </div>
+    </CurrentUserContext.Provider>
   );
 }
 
